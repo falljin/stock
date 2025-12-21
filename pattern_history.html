@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>KRX 패턴 스캔 히스토리</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+    }
+    table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    th, td {
+        border: 1px solid #ccc;
+        padding: 6px 10px;
+        text-align: center;
+    }
+    th {
+        background-color: #f2f2f2;
+    }
+</style>
+</head>
+<body>
+
+<h2>KRX 패턴 스캔 결과</h2>
+<table id="data-table"></table>
+
+<script>
+const csvUrl = "pattern_latest.csv"; // 같은 repo 내 CSV
+
+// 🎨 색상 팔레트 (종목별 순환)
+const COLORS = [
+    "#FFF3CD", "#D1ECF1", "#D4EDDA", "#F8D7DA",
+    "#E2E3E5", "#FCE5CD", "#EAD1DC", "#D9EAD3",
+    "#D0E0E3", "#F4CCCC"
+];
+
+fetch(csvUrl)
+    .then(res => res.text())
+    .then(text => {
+        const rows = text.trim().split("\n").map(r => r.split(","));
+        const table = document.getElementById("data-table");
+
+        const header = rows[0];
+        const data = rows.slice(1);
+
+        // 1️⃣ 종목별 색상 매핑
+        const colorMap = {};
+        let colorIndex = 0;
+
+        data.forEach(row => {
+            const name = row[0];
+            if (!colorMap[name]) {
+                colorMap[name] = COLORS[colorIndex % COLORS.length];
+                colorIndex++;
+            }
+        });
+
+        // 2️⃣ 헤더 생성
+        const thead = document.createElement("tr");
+        header.forEach(h => {
+            const th = document.createElement("th");
+            th.textContent = h;
+            thead.appendChild(th);
+        });
+        table.appendChild(thead);
+
+        // 3️⃣ 데이터 행 생성 + 색상 적용
+        data.forEach(row => {
+            const tr = document.createElement("tr");
+            tr.style.backgroundColor = colorMap[row[0]];
+
+            row.forEach(cell => {
+                const td = document.createElement("td");
+                td.textContent = cell;
+                tr.appendChild(td);
+            });
+
+            table.appendChild(tr);
+        });
+    });
+</script>
+
+</body>
+</html>
