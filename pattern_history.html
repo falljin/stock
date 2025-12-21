@@ -8,10 +8,19 @@
     body {
         font-family: Arial, sans-serif;
         padding: 20px;
+        display: flex;
+        justify-content: center;
+        background-color: #f9f9f9;
+    }
+
+    #tables {
+        width: 90%;        /* 화면 대비 90% 폭 */
+        max-width: 1000px; /* 최대 폭 제한 */
     }
 
     h2 {
-        margin-bottom: 10px;
+        text-align: center;
+        margin-bottom: 20px;
     }
 
     h3 {
@@ -22,80 +31,97 @@
 
     table {
         border-collapse: collapse;
-        width: 100%;
+        width: 100%;           /* div 폭 100% */
         margin-bottom: 20px;
+        table-layout: fixed;   /* 열 너비 균등 */
+        word-wrap: break-word; /* 긴 텍스트 줄바꿈 */
+        background-color: #fff;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
 
     th, td {
         border: 1px solid #ccc;
         padding: 6px 10px;
         text-align: center;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        font-size: 14px;
     }
 
     th {
         background-color: #f2f2f2;
     }
+
+    /* 모바일 대응 */
+    @media screen and (max-width: 600px) {
+        #tables {
+            width: 100%;
+        }
+
+        th, td {
+            padding: 4px 6px;
+            font-size: 12px;
+        }
+    }
 </style>
 </head>
 <body>
 
-<h2>KRX 패턴 스캔 결과 히스토리</h2>
-<div id="tables"></div>
+<div id="tables">
+    <h2>KRX 패턴 스캔 결과 히스토리</h2>
+</div>
 
 <script>
-const csvUrl = "pattern_latest.csv";
+const csvUrl = "https://falljin.github.io/stock/pattern_latest.csv";
 
-/* 🎨 가독성 좋은 고대비 색상 팔레트 */
+/* 🎨 고대비 색상 팔레트 (종목별 고정) */
 const COLORS = [
     "#FFCDD2", "#F8BBD0", "#E1BEE7", "#D1C4E9",
     "#C5CAE9", "#BBDEFB", "#B3E5FC", "#B2EBF2",
-    "#B2DFDB", "#C8E6C9", "#DCEDC8", "#F0F4C3",
-    "#FFF9C4", "#FFE0B2", "#FFCCBC", "#D7CCC8"
+    "#B2DFDB", "#C8E6C9", "#DCEDC8", "#FFF9C4",
+    "#FFE0B2", "#FFCCBC"
 ];
 
 fetch(csvUrl)
     .then(res => res.text())
     .then(text => {
-        const lines = text.trim().split("\n");
+        // 🔑 CRLF 문제 해결
+        const lines = text.trim().replace(/\r/g, "").split("\n");
         const container = document.getElementById("tables");
 
-        let currentDate = null;
-        let header = [];
         let table, tbody;
+        let headerReady = false;
 
-        /* 🔑 종목별 색상 고정 매핑 */
         const colorMap = {};
         let colorIndex = 0;
 
         lines.forEach(line => {
+            if (!line.trim()) return;
+
             const cells = line.split(",");
 
-            // 📅 날짜 행 (YYYY-MM-DD)
+            // 날짜 행
             if (cells.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(cells[0])) {
-                currentDate = cells[0];
-
-                // 날짜 제목
                 const h3 = document.createElement("h3");
-                h3.textContent = currentDate;
+                h3.textContent = cells[0];
                 container.appendChild(h3);
 
-                // 새 테이블 생성
                 table = document.createElement("table");
                 tbody = document.createElement("tbody");
                 table.appendChild(tbody);
                 container.appendChild(table);
 
-                header = [];
+                headerReady = false;
                 return;
             }
 
-            // 📌 헤더 행
-            if (header.length === 0) {
-                header = cells;
+            // 헤더
+            if (!headerReady) {
                 const thead = document.createElement("thead");
                 const tr = document.createElement("tr");
 
-                header.forEach(h => {
+                cells.forEach(h => {
                     const th = document.createElement("th");
                     th.textContent = h;
                     tr.appendChild(th);
@@ -103,12 +129,12 @@ fetch(csvUrl)
 
                 thead.appendChild(tr);
                 table.insertBefore(thead, tbody);
+                headerReady = true;
                 return;
             }
 
-            // 📊 데이터 행
+            // 데이터 행
             const name = cells[0];
-
             if (!colorMap[name]) {
                 colorMap[name] = COLORS[colorIndex % COLORS.length];
                 colorIndex++;
