@@ -3,20 +3,35 @@
 <head>
 <meta charset="UTF-8">
 <title>KRX 패턴 스캔 히스토리</title>
+
 <style>
     body {
         font-family: Arial, sans-serif;
         padding: 20px;
     }
+
+    h2 {
+        margin-bottom: 10px;
+    }
+
+    h3 {
+        margin-top: 40px;
+        margin-bottom: 10px;
+        color: #333;
+    }
+
     table {
         border-collapse: collapse;
         width: 100%;
+        margin-bottom: 20px;
     }
+
     th, td {
         border: 1px solid #ccc;
         padding: 6px 10px;
         text-align: center;
     }
+
     th {
         background-color: #f2f2f2;
     }
@@ -24,61 +39,91 @@
 </head>
 <body>
 
-<h2>KRX 패턴 스캔 결과</h2>
-<table id="data-table"></table>
+<h2>KRX 패턴 스캔 결과 히스토리</h2>
+<div id="tables"></div>
 
 <script>
-const csvUrl = "pattern_latest.csv"; // 같은 repo 내 CSV
+const csvUrl = "pattern_latest.csv";
 
-// 🎨 색상 팔레트 (종목별 순환)
+/* 🎨 가독성 좋은 고대비 색상 팔레트 */
 const COLORS = [
-    "#FFF3CD", "#D1ECF1", "#D4EDDA", "#F8D7DA",
-    "#E2E3E5", "#FCE5CD", "#EAD1DC", "#D9EAD3",
-    "#D0E0E3", "#F4CCCC"
+    "#FFCDD2", "#F8BBD0", "#E1BEE7", "#D1C4E9",
+    "#C5CAE9", "#BBDEFB", "#B3E5FC", "#B2EBF2",
+    "#B2DFDB", "#C8E6C9", "#DCEDC8", "#F0F4C3",
+    "#FFF9C4", "#FFE0B2", "#FFCCBC", "#D7CCC8"
 ];
 
 fetch(csvUrl)
     .then(res => res.text())
     .then(text => {
-        const rows = text.trim().split("\n").map(r => r.split(","));
-        const table = document.getElementById("data-table");
+        const lines = text.trim().split("\n");
+        const container = document.getElementById("tables");
 
-        const header = rows[0];
-        const data = rows.slice(1);
+        let currentDate = null;
+        let header = [];
+        let table, tbody;
 
-        // 1️⃣ 종목별 색상 매핑
+        /* 🔑 종목별 색상 고정 매핑 */
         const colorMap = {};
         let colorIndex = 0;
 
-        data.forEach(row => {
-            const name = row[0];
+        lines.forEach(line => {
+            const cells = line.split(",");
+
+            // 📅 날짜 행 (YYYY-MM-DD)
+            if (cells.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(cells[0])) {
+                currentDate = cells[0];
+
+                // 날짜 제목
+                const h3 = document.createElement("h3");
+                h3.textContent = currentDate;
+                container.appendChild(h3);
+
+                // 새 테이블 생성
+                table = document.createElement("table");
+                tbody = document.createElement("tbody");
+                table.appendChild(tbody);
+                container.appendChild(table);
+
+                header = [];
+                return;
+            }
+
+            // 📌 헤더 행
+            if (header.length === 0) {
+                header = cells;
+                const thead = document.createElement("thead");
+                const tr = document.createElement("tr");
+
+                header.forEach(h => {
+                    const th = document.createElement("th");
+                    th.textContent = h;
+                    tr.appendChild(th);
+                });
+
+                thead.appendChild(tr);
+                table.insertBefore(thead, tbody);
+                return;
+            }
+
+            // 📊 데이터 행
+            const name = cells[0];
+
             if (!colorMap[name]) {
                 colorMap[name] = COLORS[colorIndex % COLORS.length];
                 colorIndex++;
             }
-        });
 
-        // 2️⃣ 헤더 생성
-        const thead = document.createElement("tr");
-        header.forEach(h => {
-            const th = document.createElement("th");
-            th.textContent = h;
-            thead.appendChild(th);
-        });
-        table.appendChild(thead);
-
-        // 3️⃣ 데이터 행 생성 + 색상 적용
-        data.forEach(row => {
             const tr = document.createElement("tr");
-            tr.style.backgroundColor = colorMap[row[0]];
+            tr.style.backgroundColor = colorMap[name];
 
-            row.forEach(cell => {
+            cells.forEach(cell => {
                 const td = document.createElement("td");
                 td.textContent = cell;
                 tr.appendChild(td);
             });
 
-            table.appendChild(tr);
+            tbody.appendChild(tr);
         });
     });
 </script>
