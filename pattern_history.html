@@ -152,6 +152,12 @@ fetch(csvUrl)
             tbody.appendChild(tr);
         });
     });
+
+const rows = csv
+  .replace(/\r/g, '')
+  .split('\n')
+  .filter(line => line.trim().length > 0);
+
 </script>
 
 </body>
