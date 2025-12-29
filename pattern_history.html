@@ -87,7 +87,10 @@ fetch(csvUrl)
     .then(res => res.text())
     .then(text => {
         // 🔑 CRLF 문제 해결
-        const lines = text.trim().replace(/\r/g, "").split("\n");
+        const lines = text
+  .replace(/\r/g, "")
+  .split("\n")
+  .filter(line => line.trim().length > 0);
         const container = document.getElementById("tables");
 
         let table, tbody;
@@ -102,7 +105,7 @@ fetch(csvUrl)
             const cells = line.split(",");
 
             // 날짜 행
-            if (cells.length === 1 && /^\d{4}-\d{2}-\d{2}$/.test(cells[0])) {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(cells[0].trim())) {
                 const h3 = document.createElement("h3");
                 h3.textContent = cells[0];
                 container.appendChild(h3);
@@ -152,11 +155,6 @@ fetch(csvUrl)
             tbody.appendChild(tr);
         });
     });
-
-const rows = csv
-  .replace(/\r/g, '')
-  .split('\n')
-  .filter(line => line.trim().length > 0);
 
 </script>
 
