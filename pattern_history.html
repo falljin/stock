@@ -138,11 +138,18 @@ fetch(csvUrl)
             }
 
             // 데이터 행
+            const score = Number(cells[1]);
+
+            // 🔥 스코어 110 미만 필터링
+            if (isNaN(score) || score < 110) 
+            return;
+
             const name = cells[0];
             if (!colorMap[name]) {
-                colorMap[name] = COLORS[colorIndex % COLORS.length];
-                colorIndex++;
-            }
+    colorMap[name] = COLORS[colorIndex % COLORS.length];
+    colorIndex++;
+}
+
 
             const tr = document.createElement("tr");
             tr.style.backgroundColor = colorMap[name];
